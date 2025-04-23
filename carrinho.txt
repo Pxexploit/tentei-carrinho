@@ -1,0 +1,134 @@
+estou fazendo um site marktplace de taquaritinga, preciso cirar um carrinho de compras dele da tela produtos, mas com base no meu banco de dados, nele eu tenho um relacionamento de m:n entre a tabela venda e produtos, e disso vem a tabela item_venda que veio desse relacionamento, na tabela de venda eu tenho os seguintes campos: id_venda	total	data	id_cliente	id_loja	status	e na tabela produto tenho os seguintes campos: 	id_produto	nome	preco	descricao	id_loja	imagem	e na tabela item_venda tenho os seguintes campos:  id_item_venda	id_venda	id_produto	item_quantidade	item_valor, preciso criar um carrinho com base nessas tabelas, e eu tenho essa tela de produtos: telaprodutos.php: <?php
+$servername = "localhost"; 
+$username = "root";
+$password = ""; 
+$dbname = "sistema_login"; 
+
+$conn = new mysqli($servername, $username, $password, $dbname);
+if ($conn->connect_error) {
+    die("Conexão falhou: " . $conn->connect_error);
+}
+
+$categoryFilter = isset($_GET['category']) ? $_GET['category'] : 'todos';
+$minPrice = isset($_GET['min-price']) ? $_GET['min-price'] : 0;
+$maxPrice = isset($_GET['max-price']) ? $_GET['max-price'] : 999999;
+
+$sql = "SELECT 
+            produto.nome AS nome_produto, 
+            produto.descricao, 
+            produto.preco, 
+            produto.imagem,  
+            loja.nome AS nome_loja, 
+            vendedor.nome AS nome_vendedor, 
+            vendedor.email 
+        FROM produto 
+        INNER JOIN loja ON produto.id_loja = loja.id_loja 
+        INNER JOIN vendedor ON loja.id_loja = vendedor.id_loja 
+        WHERE produto.preco BETWEEN ? AND ?";
+
+if ($categoryFilter !== 'todos') {
+    $sql .= " AND produto.descricao LIKE ?";
+    $stmt = $conn->prepare($sql);
+    $searchCategoria = '%' . $categoryFilter . '%';
+    $stmt->bind_param("dds", $minPrice, $maxPrice, $searchCategoria);
+} else {
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("dd", $minPrice, $maxPrice);
+}
+
+$stmt->execute();
+$result = $stmt->get_result();
+?>
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketplace - Produtos</title>
+    <link rel="stylesheet" href="css/telaproduto.css">
+</head>
+<body>
+
+<header>
+    <div class="logo"><img src="images/site2.png" alt="Logo" style="width: 4.7rem;"></div>
+    <div class="search-bar">
+        <input type="text" placeholder="Buscar produtos..." id="search-input">
+    </div>
+    <div class="filters">
+        <button onclick="toggleFilters()">Filtros</button>
+        <a href="carrinho.php" class="cart-button">
+            <img src="images/carrinho.png" alt="Carrinho de Compras">
+        </a>
+    </div>
+</header>
+
+<div class="filters-section" id="filters-section" style="display: none;">
+    <form action="" method="GET">
+        <select name="category" id="category">
+            <option value="todos" <?php echo $categoryFilter == 'todos' ? 'selected' : ''; ?>>Todas as Categorias</option>
+            <option value="eletronicos" <?php echo $categoryFilter == 'eletronicos' ? 'selected' : ''; ?>>Eletrônicos</option>
+            <option value="roupas" <?php echo $categoryFilter == 'roupas' ? 'selected' : ''; ?>>Roupas</option>
+            <option value="moveis" <?php echo $categoryFilter == 'moveis' ? 'selected' : ''; ?>>Móveis</option>
+        </select>
+        <input type="number" placeholder="Preço mínimo" name="min-price" value="<?php echo $minPrice; ?>">
+        <input type="number" placeholder="Preço máximo" name="max-price" value="<?php echo $maxPrice; ?>">
+        <button type="submit">Aplicar Filtros</button>
+    </form>
+</div>
+
+<section class="product-list">
+    <?php
+    if ($result->num_rows > 0) {
+        while($produto = $result->fetch_assoc()) {
+            ?>
+            <div class="product-card">
+                <img src="uploads/<?php echo $produto['imagem']; ?>" alt="<?php echo $produto['nome_produto']; ?>">
+                <div class="product-details">
+                    <h3 class="product-name"><?php echo $produto['nome_produto']; ?></h3>
+                    <p class="product-description"><?php echo $produto['descricao']; ?></p>
+                    <span class="product-price">R$ <?php echo number_format($produto['preco'], 2, ',', '.'); ?></span><br>
+                    <span class="product-store">Loja: <?php echo $produto['nome_loja']; ?></span><br>
+                    <span class="product-seller">Vendedor: <?php echo $produto['nome_vendedor']; ?></span>
+                    
+                    <div class="button-group">
+                        <a href="mailto:<?php echo $produto['email']; ?>" class="contact-button">Contato com o Vendedor</a>
+                        <a href="adicionar_ao_carrinho.php?produto=<?php echo urlencode($produto['nome_produto']); ?>" class="add-cart-button">
+                            <img src="images/addcarrinho.png" alt="Adicionar ao Carrinho">
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <?php
+        }
+    } else {
+        echo "<p>Nenhum produto encontrado.</p>";
+    }
+    ?>
+</section>
+
+<footer>
+    <div class="footer-links">
+        <a href="/sobre">Sobre</a>
+        <a href="/politica-privacidade">Política de Privacidade</a>
+        <a href="/termos-uso">Termos de Uso</a>
+    </div>
+    <div class="footer-info">
+        <p>© 2025 TaquaMarket. Todos os direitos reservados.</p>
+    </div>
+</footer>
+
+<script>
+function toggleFilters() {
+    const filtersSection = document.getElementById('filters-section');
+    filtersSection.style.display = filtersSection.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+
+</body>
+</html>
+
+<?php $conn->close(); ?> , e nessa tela de produtos eu ja tenho o botao de adicionar os produtos no carrinho, em:  <a href="adicionar_ao_carrinho.php?produto=<?php echo urlencode($produto['nome_produto']); ?>" class="add-cart-button">
+                            <img src="images/addcarrinho.png" alt="Adicionar ao Carrinho"> e tbm ja tenho o botao de carrinho em:   <img src="images/carrinho.png" alt="Carrinho de Compras">
+        </a>
+    </div>, ai preciso fazer um carrinho mas nao sei faça para mim. me de os codigos completos para eu so copiar e colar
