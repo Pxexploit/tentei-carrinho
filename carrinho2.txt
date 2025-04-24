@@ -1,0 +1,75 @@
+é possivel criar o carrinho usando essas tabelas:  -- Criação da tabela cliente
+CREATE TABLE cliente (
+    id_cliente INT PRIMARY KEY AUTO_INCREMENT,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    senha VARCHAR(100) NOT NULL
+);
+
+-- Criação da tabela loja
+CREATE TABLE loja (
+    id_loja INT PRIMARY KEY AUTO_INCREMENT,
+    nome VARCHAR(100) NOT NULL,
+    endereco VARCHAR(200) NOT NULL,
+    telefone VARCHAR(20),
+    cnpj VARCHAR(18),
+    cpf VARCHAR(14)
+);
+
+-- Criação da tabela vendedor
+CREATE TABLE vendedor (
+    id_vendedor INT PRIMARY KEY AUTO_INCREMENT,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    senha VARCHAR(100) NOT NULL,
+    id_loja INT,
+    FOREIGN KEY (id_loja) REFERENCES loja(id_loja)
+);
+
+-- Criação da tabela produto
+CREATE TABLE produto (
+    id_produto INT PRIMARY KEY AUTO_INCREMENT,
+    nome VARCHAR(100) NOT NULL,
+    preco DECIMAL(10,2) NOT NULL,
+    descricao TEXT,
+    id_loja INT,
+    imagem VARCHAR(255),
+    FOREIGN KEY (id_loja) REFERENCES loja(id_loja)
+);
+
+-- Criação da tabela venda
+CREATE TABLE venda (
+    id_venda INT PRIMARY KEY AUTO_INCREMENT,
+    total DECIMAL(10,2) NOT NULL,
+    data DATE NOT NULL,
+    id_cliente INT,
+    id_loja INT,
+    status VARCHAR(20) DEFAULT 'aberto',
+    FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
+    FOREIGN KEY (id_loja) REFERENCES loja(id_loja)
+);
+
+-- Criação da tabela item_venda
+CREATE TABLE item_venda (
+    id_item_venda INT PRIMARY KEY AUTO_INCREMENT,
+    id_venda INT,
+    id_produto INT,
+    item_quantidade INT NOT NULL,
+    item_valor DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (id_venda) REFERENCES venda(id_venda),
+    FOREIGN KEY (id_produto) REFERENCES produto(id_produto)
+);
+
+, usando codigos como inner join e etc do banco de dados
+
+----------------------------------------------------------------------------
+
+
+olha, eu tenho esse código em php:                , preciso que quando clicar no botao: <a href="adicionar_ao_carrinho.php?produto=<?php echo urlencode($produto['nome_produto']); ?>" class="add-cart-button"> 
+                            <img src="images/addcarrinho.png" alt="Adicionar ao Carrinho">ele salve as coisas desse produto no carrinho, e quando clicar no botão :<button onclick="toggleFilters()">Filtros</button>
+        <a href="carrinho.php" class="cart-button">
+            <img src="images/carrinho.png" alt="Carrinho de Compras">, vá para a tela de carrinhos, mas preciso criar essa tela de carrinho 
+
+
+
+
